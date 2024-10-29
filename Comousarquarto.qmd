@@ -127,36 +127,41 @@ model
 
 # comparacion de medias 
 
+```{r}
+modelo <- lm(formula = hi ~ bloque + riego + geno + riego*geno
+              , data = fb)
 
+anova(modelo)
 
+library(agricolae)
 
+tukey_result <- HSD.test(modelo
+                         , c("geno", "riego")
+                         , group = TRUE)
 
+print(tukey_result)
 
+plot(tukey_result)
 
+str(tukey_result)
 
+grupos <- tukey_result$groups %>% 
+  rownames_to_column("tratamientos") %>% 
+  separate(tratamientos, into = c("geno", "riego")
+           , sep = ":")
 
+str(grupos)
 
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+ggplot(fb, aes(x = geno, y = lfa, fill = riego)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Gráfico de Barras: LFA por Genotipo y Riego",
+       x = "Genotipo", y = "LFA") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
 
 
 
