@@ -186,13 +186,63 @@ fb %>%
                )
 ```
 
+
 ## PCA: analisis de componentes principales 
 
 ```{r}
+# Cargar las librerías necesarias
+library(FactoMineR)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
 
+# Agrupar y resumir los datos
+mv <- fb %>%
+  group_by(riego, geno) %>%
+  summarise(across(where(is.numeric), ~ mean(., na.rm = TRUE), .names = "mean_{col}")) %>%
+  ungroup()  # Desagrupar los datos después de resumir
+
+# Realizar el PCA, ajustando quali.sup a las columnas cualitativas (riego y geno)
+pca_result <- PCA(mv, scale.unit = TRUE, quali.sup = c(1, 2), graph = FALSE)
+
+# Graficar los individuos
+p1 <- plot.PCA(pca_result, habillage = "riego", title = "Gráfico de Individuos")
+
+# Graficar las variables
+p2 <- plot.PCA(pca_result, choix = "var", title = "Gráfico de Variables")
+
+# Combinar las gráficas en una sola
+grid.arrange(p1, p2, nrow = 1)
+```
+
+#graficos en ggplot2
+##data cruda
+### boxplot
+
+```{r}
+p1 <- fb %>% 
+  ggplot(data = ., aes(x = geno, y = hi, fill = riego)) +
+   geom_boxplot() +
+  labs(x = "Genotipos"
+       , y = "Indice de cosecha"
+       , fill = "Tratamiento" 
+       , title ="Eficiencia de uso de agua en papa"
+       , subtitle = "Indice de cosecha"
+       , caption = "n = 150", 
+       ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p1
 ```
 
 
+```{r}
+fb %>% 
+  ggplot(data = .
+         , aes (x = twue, y= hi, color = riego)) +
+  geom_point()
+```
 
 
 
