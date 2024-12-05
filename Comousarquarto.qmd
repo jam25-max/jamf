@@ -20,14 +20,17 @@ When you click the **Render** button a document will be generated that includes 
 
 ```{r}
 1 + 1
+
 ```
 
-You can add options to executable code like this 
 
 ```{r}
 #| echo: false
 2 * 2
+
 ```
+
+
 
 The `echo: false` option disables the printing of code (only output is displayed).
 # ¿Cómo usar Quarto?
@@ -190,30 +193,28 @@ fb %>%
 ## PCA: analisis de componentes principales 
 
 ```{r}
-# Cargar las librerías necesarias
 library(FactoMineR)
-library(dplyr)
-library(ggplot2)
-library(gridExtra)
 
-# Agrupar y resumir los datos
-mv <- fb %>%
-  group_by(riego, geno) %>%
-  summarise(across(where(is.numeric), ~ mean(., na.rm = TRUE), .names = "mean_{col}")) %>%
-  ungroup()  # Desagrupar los datos después de resumir
+mv <- fb %>% 
+  group_by(riego, geno) %>% 
+  summarise(across(where(is.numeric), ~ mean(., na.rm = TRUE))) %>% 
+  PCA(scale.unit = T, quali.sup = c(1:4), graph = F)
 
-# Realizar el PCA, ajustando quali.sup a las columnas cualitativas (riego y geno)
-pca_result <- PCA(mv, scale.unit = TRUE, quali.sup = c(1, 2), graph = FALSE)
 
-# Graficar los individuos
-p1 <- plot.PCA(pca_result, habillage = "riego", title = "Gráfico de Individuos")
+p1 <- plot(mv
+     , choix="ind"
+     , habillage=1
+     , label = "ind"
+     )
 
-# Graficar las variables
-p2 <- plot.PCA(pca_result, choix = "var", title = "Gráfico de Variables")
 
-# Combinar las gráficas en una sola
-grid.arrange(p1, p2, nrow = 1)
+p2 <- plot(mv
+     , choix="var")
+
+list(p1, p2) %>% 
+  plot_grid(plotlist = ., nrow = 1)
 ```
+
 
 #graficos en ggplot2
 ##data cruda
@@ -235,14 +236,59 @@ p1 <- fb %>%
 
 p1
 ```
-
+## scater plot
 
 ```{r}
-fb %>% 
+p2 <- fb %>% 
   ggplot(data = .
-         , aes (x = twue, y= hi, color = riego)) +
-  geom_point()
+         , aes(x = twue, y = hi, color = riego)) +
+  geom_point() +
+  geom_smooth(method = lm) +
+    labs(x = "Efiencia de uso de agua de tuberculo"
+       , y = "Indice de cosecha"
+       , color = "Tratamiento" 
+       , title ="Eficiencia de uso de agua en papa"
+       , subtitle = "Indice de cosecha vs Efiencia de uso de agua de tuberculo"
+       , caption = "n = 150", 
+       ) +
+  theme_bw()
+
+p2
 ```
+
+## datos resumidos
+
+```{r}
+modelo <- lm(lfa ~  bloque + riego*geno
+          , data = fb)
+
+anova(modelo)
+## Analysis of Variance Table
+## 
+## Response: lfa
+##             Df    Sum Sq   Mean Sq   F value              Pr(>F)    
+## bloque       4   3435339    858835    1.5616              0.1892    
+## riego        1 788556926 788556926 1433.7957 <0.0000000000000002 ***
+## geno        14 261729564  18694969   33.9922 <0.0000000000000002 ***
+## riego:geno  14 108147972   7724855   14.0457 <0.0000000000000002 ***
+## Residuals  116  63797516    549979                                  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+library(agricolae)
+
+tukey <- HSD.test(modelo
+                  , c("geno", "riego")
+                  , group = TRUE)
+
+grupos <- tukey_result$groups %>% 
+  rownames_to_column("tratamientos") %>% 
+  separate(tratamientos, into = c("geno", "riego")
+           , sep = ":")
+```
+
+
+str(datos)
 
 
 
